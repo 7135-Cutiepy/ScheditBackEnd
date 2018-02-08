@@ -8,7 +8,7 @@ To install dependecies (required to run the server), run `npm install`. This is 
 
 ## Running the Server
 
-To start up the server, run `npm start`. This will bring the server up at [localhost:3200]().
+To start up the server, run `npm start`. This will bring the server up at [localhost:3200](). Changes will be reloaded any time a file changes, thanks to Nodemon. All you have to do is refresh your browser. No need to restart the server manually on the command line.
 
 ## Routes
 
