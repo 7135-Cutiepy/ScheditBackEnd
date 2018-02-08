@@ -76,22 +76,23 @@ function schedClimber(schedPrefs, cal, iterations, onSched) {
   return topSched;
 }
 module.exports = function (preferences) {
-  var scheds = [];
-  for (var i = 0; i < numScheds; i++) {
-    console.log('finding schedule: ' + i)
-    try {
-      scheds.push(schedClimber(preferences.schedule, preferences.cal, schedIterations, i));
-      console.log('sched score: ' + scheds[scheds.length - 1].evaluation.score);
-    } catch (a) {
-      console.log(a);
-      console.log('failure experienced at ' + i);
-      i--;
-    }
-  }
-  scheds.sort(function (a, b) {
-    return b.evaluation.score - a.evaluation.score
-  });
-  console.log('done');
-  console.log(scheds);
-  return scheds;
+  return("called func");
+  // var scheds = [];
+  // for (var i = 0; i < numScheds; i++) {
+  //   console.log('finding schedule: ' + i)
+  //   try {
+  //     scheds.push(schedClimber(preferences.schedule, preferences.cal, schedIterations, i));
+  //     console.log('sched score: ' + scheds[scheds.length - 1].evaluation.score);
+  //   } catch (a) {
+  //     console.log(a);
+  //     console.log('failure experienced at ' + i);
+  //     i--;
+  //   }
+  // }
+  // scheds.sort(function (a, b) {
+  //   return b.evaluation.score - a.evaluation.score
+  // });
+  // console.log('done');
+  // console.log(scheds);
+  // return scheds;
 }

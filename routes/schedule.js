@@ -1,9 +1,10 @@
 var express = require('express');
 var router = express.Router();
+var algo = require('./algorithm/caller');
 
 /* GET users listing. */
 router.get('/', function(req, res, next) {
-  res.send(new Date().toString());
+  res.send(algo);
 });
 
 module.exports = router;
