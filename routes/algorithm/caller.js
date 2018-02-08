@@ -1,0 +1,1 @@
+var rhc = require('./rhc')(require('./../courseData/sampleSchedData'));
