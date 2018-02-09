@@ -18,4 +18,4 @@ Returns an index page...todo: get rid of this b.s.
 
 ### /schedule
 
-Currently returns a string that says "But this grill is not a home. This is not the stove I know. I would trade it all away. If you'd come back to stay." This route will be the basis for queing schedule creation, checking the status of a job, and returning schedules after they're created.
+Currently returns a string that says "sup". This route will be the basis for queing schedule creation, checking the status of a job, and returning schedules after they're created.

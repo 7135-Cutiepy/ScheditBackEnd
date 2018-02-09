@@ -1,2 +1,0 @@
-var rhc = require('./rhc')(require('./courseData/sampleSchedData'));
-module.exports = "But this grill is not a home. This is not the stove I know. I would trade it all away. If you'd come back to stay.";
