@@ -7,22 +7,26 @@ var router = express.Router();
 router.get('/test', function(req, res, next) {
     var test = `
         <div id="parent">
+        Freshmen Only See cc.gatech.edu/regdates
+        <br>
         <span class="fieldlabeltext">Associated Term: </span>Fall 2018 
         <br>
         <span class="fieldlabeltext">Registration Dates: </span>Mar 26, 2018 to Aug 24, 2018 
         <br>
-        <span class="fieldlabeltext">Levels: </span>Graduate Semester 
+        <span class="fieldlabeltext">Levels: </span>Graduate Semester, Undergraduate Semester 
         <br>
         <br>
         Georgia Tech-Atlanta * Campus
         <br>
-        Dissertation* Schedule Type
+        Lecture* Schedule Type
         <br>
-            1.000 TO       21.000 Credits
+        10 Instructional Method
+        <br>
+               1.000 Credits
         <br>
         <span class="fieldlabeltext">Grade Basis: </span>P 
         <br>
-        <a href="/pls/bprod/bwckctlg.p_display_courses?term_in=201808&amp;one_subj=CS&amp;sel_crse_strt=9000&amp;sel_crse_end=9000&amp;sel_subj=&amp;sel_levl=&amp;sel_schd=&amp;sel_coll=&amp;sel_divs=&amp;sel_dept=&amp;sel_attr=">View Catalog Entry</a>
+        <a href="/pls/bprod/bwckctlg.p_display_courses?term_in=201808&amp;one_subj=CS&amp;sel_crse_strt=1100&amp;sel_crse_end=1100&amp;sel_subj=&amp;sel_levl=&amp;sel_schd=&amp;sel_coll=&amp;sel_divs=&amp;sel_dept=&amp;sel_attr=">View Catalog Entry</a>
         <br>
         <br>
         <table class="datadisplaytable" summary="This table lists the scheduled meeting times and assigned instructors for this class.."><caption class="captiontext">Scheduled Meeting Times</caption>
@@ -37,12 +41,12 @@ router.get('/test', function(req, res, next) {
         </tr>
         <tr>
         <td class="dddefault">Class</td>
-        <td class="dddefault"><abbr title="To Be Announced">TBA</abbr></td>
-        <td class="dddefault">&#xA0;</td>
-        <td class="dddefault"><abbr title="To Be Announced">TBA</abbr></td>
+        <td class="dddefault">3:00 pm - 3:50 pm</td>
+        <td class="dddefault">T</td>
+        <td class="dddefault">College of Business 100</td>
         <td class="dddefault">Aug 20, 2018 - Dec 13, 2018</td>
-        <td class="dddefault">Dissertation*</td>
-        <td class="dddefault">Ellen   Zegura (<abbr title="Primary">P</abbr>)<a href="mailto:ewz@cc.gatech.edu" target="Ellen Zegura"><img src="/wtlgifs/web_email.gif" align="middle" alt="E-mail" class="headerImg" title="E-mail" name="web_email" hspace="0" vspace="0" border="0" height="28" width="28"></a></td>
+        <td class="dddefault">Lecture*</td>
+        <td class="dddefault">Jennifer Nicole  Whitlow (<abbr title="Primary">P</abbr>)<a href="mailto:jwhitlow@cc.gatech.edu" target="Jennifer N. Whitlow"><img src="/wtlgifs/web_email.gif" align="middle" alt="E-mail" class="headerImg" title="E-mail" name="web_email" hspace="0" vspace="0" border="0" height="28" width="28"></a></td>
         </tr>
         </tbody></table>
         <br>
@@ -55,8 +59,71 @@ router.get('/test', function(req, res, next) {
     $('#parent').children().each(function(){
         arrOfHtml.push($(this));
     });
-    console.log(arrOfHtml.toString());
-    res.send(test);
+
+    var rawString = $('#parent')
+        .clone()
+        .children()
+        .remove()
+        .end()
+        .text()
+        .split('\n');
+
+    var semester = $('.fieldlabeltext:contains("Associated Term:")')[0].nextSibling.nodeValue.trim();
+    var credits = 0;
+    rawString.forEach((element)=>{
+        if (element.match(/credits/i)) {
+            credits = +element.match(/([^\s]+)/)[0];
+        }
+    });
+    
+    var classObj = {
+        semester: semester,
+        credits: credits
+    };
+    console.log(classObj);
+
+    var timeslot_array = [];
+    var timeslot_table = $('#parent>table>tbody>tr:not(:first-child)').each(function() {
+        timeslot_array.push($(this).toString());
+    });
+
+    var timeslot_array_final = [];
+    for (var i = 0; i < timeslot_array.length; i++) {
+        timeslot_array[i]=timeslot_array[i].split('\n');
+        
+        var timeslot_obj = {};
+        var times = [];
+
+        var time = $(timeslot_array[i][2]).text().trim().split('-');
+        var converted_times = [];
+        time.forEach((element)=>{
+            var split_time = element.split(':');
+            split_time[1] = split_time[1].split(' ');
+            var time_obj = {
+                hours: +split_time[0],
+                minutes: +split_time[1][0],
+                am_pm: split_time[1][1]
+            };
+            converted_times.push((time_obj.hours * 60 + time_obj.minutes) + ((time_obj.am_pm == 'pm') ? 12*60 : 0));
+        });
+        timeslot_obj.start_time = converted_times[0];
+        timeslot_obj.end_time = converted_times[1];
+        timeslot_obj.days = $(timeslot_array[i][3]).text().trim();
+        timeslot_obj.location = $(timeslot_array[i][4]).text().trim();
+        timeslot_obj.instructors = $(timeslot_array[i][7]).text().trim().split(',');
+        
+        timeslot_obj.instructors.forEach((element, i)=>{
+            timeslot_obj.instructors[i] = element.trim();
+        });
+        
+        timeslot_array_final.push(timeslot_obj);
+    }
+    
+
+
+    classObj.timeslots = timeslot_array_final;
+
+    res.send(classObj);
 });
 
 router.get('/', function(req, res, next) {
@@ -92,7 +159,8 @@ router.get('/', function(req, res, next) {
 
                 $('.pagebodydiv>.datadisplaytable>tbody>tr>.dddefault').each(function(i) {
                     console.log(">>>>>>>>>begin raw");
-                    console.log($(this).html());
+                    if (i==0)
+                        console.log($(this).html());
                     console.log(">>>>>>>>>end raw");
 
                     // console.log(">>>>>>>>>begin formatted");
@@ -100,8 +168,8 @@ router.get('/', function(req, res, next) {
                     // console.log(">>>>>>>>>end formatted");
                     console.log("");
                 });
-                // res.send(sections);
-                res.send(body);
+                res.send(sections);
+                // res.send(body);
             });
         // });
     });
@@ -134,7 +202,7 @@ var create_section = function(section_string) {
 
     var class_obj = {
         name: name,
-        crn: crn,
+        call_number: crn,
         major: major,
         number: number,
         section: section
