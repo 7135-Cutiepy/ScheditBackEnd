@@ -6,7 +6,6 @@ var router = express.Router();
 
 router.get('/test', function(req, res, next) {
     var test = `
-        <div id="parent">
         Freshmen Only See cc.gatech.edu/regdates
         <br>
         <span class="fieldlabeltext">Associated Term: </span>Fall 2018 
@@ -50,17 +49,16 @@ router.get('/test', function(req, res, next) {
         </tr>
         </tbody></table>
         <br>
-        <br>
-        </div>`;
+        <br>`;
 
     var $ = cheerio.load(test);
 
     var arrOfHtml = [];
-    $('#parent').children().each(function(){
+    $('body').children().each(function(){
         arrOfHtml.push($(this));
     });
 
-    var rawString = $('#parent')
+    var rawString = $('body')
         .clone()
         .children()
         .remove()
@@ -83,7 +81,7 @@ router.get('/test', function(req, res, next) {
     console.log(classObj);
 
     var timeslot_array = [];
-    var timeslot_table = $('#parent>table>tbody>tr:not(:first-child)').each(function() {
+    var timeslot_table = $('body>table>tbody>tr:not(:first-child)').each(function() {
         timeslot_array.push($(this).toString());
     });
 
@@ -110,11 +108,11 @@ router.get('/test', function(req, res, next) {
         timeslot_obj.end_time = converted_times[1];
         timeslot_obj.days = $(timeslot_array[i][3]).text().trim();
         timeslot_obj.location = $(timeslot_array[i][4]).text().trim();
-        timeslot_obj.instructors = $(timeslot_array[i][7]).text().trim().split(',');
+        timeslot_obj.instructor = $(timeslot_array[i][7]).text().trim().split(',')[0];
         
-        timeslot_obj.instructors.forEach((element, i)=>{
-            timeslot_obj.instructors[i] = element.trim();
-        });
+        // timeslot_obj.instructors.forEach((element, i)=>{
+        //     timeslot_obj.instructors[i] = element.trim();
+        // });
         
         timeslot_array_final.push(timeslot_obj);
     }
@@ -155,21 +153,22 @@ router.get('/', function(req, res, next) {
                 
                 $('.datadisplaytable .ddtitle a').each(function(i) {
                     sections.push(create_section($(this).html()));
+                    // var major_obj = majors.filter((major)=>{
+                    //     return major.code == sections[i].major;
+                    // })[0];
+                    // console.log(sections[i]);
+                    // console.log(major_obj.name);
+                    // sections[i].majorName = major_obj.name;
                 });
 
                 $('.pagebodydiv>.datadisplaytable>tbody>tr>.dddefault').each(function(i) {
-                    console.log(">>>>>>>>>begin raw");
-                    if (i==0)
-                        console.log($(this).html());
-                    console.log(">>>>>>>>>end raw");
+                    var additional_info = create_section_2($(this).html());
 
-                    // console.log(">>>>>>>>>begin formatted");
-                    // console.log($(this:nth-child(0)));
-                    // console.log(">>>>>>>>>end formatted");
-                    console.log("");
+                    sections[i].semester = additional_info.semester;
+                    sections[i].credits = additional_info.credits;
+                    sections[i].timeslots = additional_info.timeslots;
                 });
                 res.send(sections);
-                // res.send(body);
             });
         // });
     });
@@ -197,18 +196,97 @@ var create_section = function(section_string) {
     var name = split[0];
     var crn = split[1];
     var major = split_2[0];
-    var number = split_2[1];
+    var ident = split_2[1];
     var section = split[3];
 
     var class_obj = {
-        name: name,
         call_number: crn,
+        name: name,
         major: major,
-        number: number,
+        ident: ident,
         section: section
     };
 
     return class_obj;
 }
+
+var create_section_2 = function(section_string) {
+
+    var $ = cheerio.load(section_string);
+    
+    var arrOfHtml = [];
+    $('body').children().each(function(){
+        arrOfHtml.push($(this));
+    });
+
+    var rawString = $('body')
+        .clone()
+        .children()
+        .remove()
+        .end()
+        .text()
+        .split('\n');
+
+    var semester = $('.fieldlabeltext:contains("Associated Term:")')[0].nextSibling.nodeValue.trim();
+    var credits = 0;
+    rawString.forEach((element)=>{
+        if (element.match(/credits/i)) {
+            credits = +element.match(/([^\s]+)/)[0];
+        }
+    });
+    
+    var classObj = {
+        semester: semester,
+        credits: credits
+    };
+
+    var timeslot_array = [];
+    var timeslot_table = $('body>table>tbody>tr:not(:first-child)').each(function() {
+        timeslot_array.push($(this).toString());
+    });
+
+    var timeslot_array_final = [];
+    for (var i = 0; i < timeslot_array.length; i++) {
+        timeslot_array[i]=timeslot_array[i].split('\n');
+        
+        var timeslot_obj = {};
+        var times = [];
+
+        var time = $(timeslot_array[i][2]).text().trim().split('-');
+
+        if (time != 'TBA') {
+            var converted_times = [];
+
+            time.forEach((element)=>{
+                var split_time = element.split(':');
+                split_time[1] = split_time[1].split(' ');
+                var time_obj = {
+                    hours: +split_time[0],
+                    minutes: +split_time[1][0],
+                    am_pm: split_time[1][1]
+                };
+                converted_times.push((time_obj.hours * 60 + time_obj.minutes) + ((time_obj.am_pm == 'pm') ? 12*60 : 0));
+            });
+            timeslot_obj.start_time = converted_times[0];
+            timeslot_obj.end_time = converted_times[1];
+        } else {
+            timeslot_obj.start_time = 'TBA';
+            timeslot_obj.end_time = 'TBA';
+        }
+        timeslot_obj.days = $(timeslot_array[i][3]).text().trim();
+        timeslot_obj.location = $(timeslot_array[i][4]).text().trim();
+        var primary_instructor = $(timeslot_array[i][7]).text().trim().split(',')[0];
+        // TODO: fix this
+        timeslot_obj.instructor = primary_instructor;
+        
+        timeslot_array_final.push(timeslot_obj);
+    }
+    
+
+
+    classObj.timeslots = timeslot_array_final;
+
+    return classObj;
+};
 
 module.exports = router;
