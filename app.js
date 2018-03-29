@@ -12,6 +12,7 @@ var db = monk('localhost:27017/schedit');
 var index = require('./routes/index');
 var schedule = require('./routes/schedule');
 var scrape = require('./routes/scrape');
+var catalog = require('./routes/catalog');
 
 var app = express();
 
@@ -35,6 +36,7 @@ app.use(function(req,res,next){
 app.use('/', index);
 app.use('/schedule', schedule);
 app.use('/scrape', scrape);
+app.use('/catalog', catalog);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
