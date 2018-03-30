@@ -83,14 +83,16 @@ router.get('/', function(req, res, next) {
         collection.insert(majors);
 
         var major = {
-            code: 'CS',
-            name: 'Computer Science'
+            code: 'RUSS',
+            name: 'Russian'
         };
 
         majors.forEach((major)=>{
             request.post('https://oscar.gatech.edu/pls/bprod/bwckschd.p_get_crse_unsec?term_in=201808&sel_subj=dummy&sel_day=dummy&sel_schd=dummy&sel_insm=dummy&sel_camp=dummy&sel_levl=dummy&sel_sess=dummy&sel_instr=dummy&sel_ptrm=dummy&sel_attr=dummy&sel_subj='+major.code+'&sel_crse=&sel_title=&sel_schd=%25&sel_from_cred=&sel_to_cred=&sel_camp=%25&sel_ptrm=%25&sel_instr=%25&sel_attr=%25&begin_hh=0&begin_mi=0&begin_ap=a&end_hh=0&end_mi=0&end_ap=a', (error, response, body)=>{
                 var sections = [];
-
+                if (!body) {
+                    console.log ("ERROR: body came back empty when major == " + major.code);
+                }
                 $ = cheerio.load(body);
                 
                 $('.datadisplaytable .ddtitle a').each(function(i) {
@@ -104,10 +106,7 @@ router.get('/', function(req, res, next) {
                     sections[i].credits = additional_info.credits;
                     sections[i].instructor = additional_info.instructor;
                     sections[i].timeslots = additional_info.timeslots;
-                   
-                    var major_name = majors.filter((d)=>{
-                        return d.code === 'CS';
-                    })[0].name;
+                    sections[i].majorName = major.name;
                 });
 
                 insert_sections(sections, db);
@@ -141,21 +140,21 @@ var insert_sections = function(sections, db) {
 
 var create_section = function(section_string) {
     var split = section_string.split(' - ');
-    var split_2 = split[2].split(' ');
+    var split_2 = split[split.length - 2].split(' ');
 
-    var name = split[0];
-    var crn = split[1];
-    var major = split_2[0];
-    var course_number = split_2[1];
-    var section = split[3];
+    var class_obj = {};
 
-    var class_obj = {
-        crn: crn,
-        name: name,
-        major: major,
-        course_number: course_number,
-        section: section
-    };
+    class_obj.major = split_2[0];
+    class_obj.course_number = split_2[1];
+    class_obj.section = split.pop();
+    split.pop();
+    class_obj.crn = split.pop();
+    var class_name = "";
+    split.forEach((name)=>{
+        class_name+=name + ' ';
+    });
+    class_name = class_name.trim();
+    class_obj.name = class_name;
 
     return class_obj;
 }
