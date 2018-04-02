@@ -1,6 +1,7 @@
 var express = require('express');
 var request = require('request');
 var cheerio = require('cheerio');
+var he = require('he');
 
 var router = express.Router();
 
@@ -148,13 +149,13 @@ var create_section = function(section_string) {
     class_obj.course_number = split_2[1];
     class_obj.section = split.pop();
     split.pop();
-    class_obj.crn = split.pop();
+    class_obj.call_number = +split.pop();
     var class_name = "";
     split.forEach((name)=>{
         class_name+=name + ' ';
     });
     class_name = class_name.trim();
-    class_obj.name = class_name;
+    class_obj.name = he.decode(class_name);
 
     return class_obj;
 }
