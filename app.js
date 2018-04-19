@@ -8,11 +8,13 @@ var cors = require('cors');
 var mongo = require('mongodb');
 var monk = require('monk');
 var db = monk('localhost:27017/schedit');
+var passport = require('passport');
 
 var index = require('./routes/index');
 var schedule = require('./routes/schedule');
 var scrape = require('./routes/scrape');
 var catalog = require('./routes/catalog');
+var users = require('./routes/users');
 
 var app = express();
 
@@ -33,10 +35,16 @@ app.use(function(req,res,next){
   next();
 });
 
+app.use(passport.initialize());
+app.use(passport.session());
+
+require('./config/passport')(passport);
+
 app.use('/', index);
 app.use('/schedule', schedule);
 app.use('/scrape', scrape);
 app.use('/catalog', catalog);
+app.use('/users', users);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
