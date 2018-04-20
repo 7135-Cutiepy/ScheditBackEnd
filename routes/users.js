@@ -24,9 +24,13 @@ router.post('/register', function(req, res, next) {
       };
 
       collection.insert(newUser);
+      
+      res.json({
+        success: true,
+        msg: 'User registered'
+      });
     })
   })
-  res.send('User: ' + email + ' registered');
 });
 
 router.post('/authenticate', function(req, res, next) {
