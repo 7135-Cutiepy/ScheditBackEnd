@@ -65,7 +65,12 @@ router.post('/authenticate', function(req, res, next) {
           });
         }
       });
-    })
+    }).catch(()=>{
+      res.json({
+        success: false,
+        msg: "Can't find user."
+      });
+    });
 });
 
 router.get('/profile', passport.authenticate('jwt', {session: false}), function(req, res, next) {
