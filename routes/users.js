@@ -3,6 +3,7 @@ var router = express.Router();
 var passport = require('passport');
 var jwt = require('jsonwebtoken');
 var bcrypt = require('bcryptjs');
+var nodemailer = require('nodemailer');
 
 /* GET home page. */
 router.post('/register', function(req, res, next) {

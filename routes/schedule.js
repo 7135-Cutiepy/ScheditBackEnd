@@ -1,738 +1,389 @@
 var express = require('express');
+var nodemailer = require('nodemailer');
 var router = express.Router();
 
 var rhc = require('./../../ScheditAlgorithm/rhc');
 
+router.post('/', function(req, res, next) {
+  var db = req.db;
+  var collection = db.get('schedules');
+
+  var result = rhc(req.body);
+  result[0]['email'] = req.body['email'];
+  result[0]['name'] = 'schedule';
+  result[0]['status'] = 'done';
+  collection.insert(result[0]);
+
+  var transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: 'scheditmail@gmail.com',
+      pass: 'ramblingwreck3312'
+    }
+  });
+  
+  var mailOptions = {
+    from: 'scheditmail@gmail.com',
+    to: req.body['email'],
+    subject: 'Your schedule is ready to view!',
+    text: 'Please visit http://localhost:4200 to login and view your completed schedule'
+  };
+  
+  transporter.sendMail(mailOptions, function(error, info){
+    if (error) {
+      console.log(error);
+    } else {
+      console.log('Email sent: ' + info.response);
+    }
+  });
+
+  res.send({success: "true", msg: "Schedule request submitted!"});
+});
+
+router.get('/:id', function(req, res, next) {
+  var db = req.db;
+  var collection = db.get('schedules');
+
+  collection.findOne({_id: req.params.id}).then((doc) => {
+    res.send(doc)
+  })
+});
+
+router.get('/user/:email', function(req, res, next) {
+  var db = req.db;
+  var collection = db.get('schedules');
+
+  collection.find({email: req.params.email}).then((docs) => {
+    res.send(docs)
+  })
+});
+
 router.get('/', function(req, res, next) {
-  var request = `
-  {
-    "schedule":{
-      "prefHours":[
-        "7",
-        "7"
-      ],
-      "groups":{
-        "mustTake":{
-          "courses":[
-            {
-              "_id":"1331",
-              "ident":"1331",
-              "major":"CS",
-              "majorName":"Computer Science",
-              "name":"Intro-Object Orient Prog",
-              "instructors":[
-                "Simpkins, Christopher L"
-              ],
-              "sections":[
-                {
-                  "call_number":88422,
-                  "credits":3,
-                  "ident":"A02",
-                  "instructor":{
-                    "lname":"Simpkins",
-                    "fname":"Christopher L"
-                  },
-                  "timeslots":[
-                    {
-                      "start_time":610,
-                      "end_time":660,
-                      "day":"M",
-                      "location":"Klaus 1443"
-                    },
-                    {
-                      "start_time":990,
-                      "end_time":1065,
-                      "day":"T",
-                      "location":"U A Whitaker Biomedical Engr 1103"
-                    },
-                    {
-                      "start_time":610,
-                      "end_time":660,
-                      "day":"W",
-                      "location":"Klaus 1443"
-                    },
-                    {
-                      "start_time":610,
-                      "end_time":660,
-                      "day":"F",
-                      "location":"Klaus 1443"
-                    }
-                  ]
-                },
-                {
-                  "call_number":89123,
-                  "credits":3,
-                  "ident":"A04",
-                  "instructor":{
-                    "lname":"Simpkins",
-                    "fname":"Christopher L"
-                  },
-                  "timeslots":[
-                    {
-                      "start_time":610,
-                      "end_time":660,
-                      "day":"M",
-                      "location":"Klaus 1443"
-                    },
-                    {
-                      "start_time":1080,
-                      "end_time":1155,
-                      "day":"T",
-                      "location":"Van Leer C340"
-                    },
-                    {
-                      "start_time":610,
-                      "end_time":660,
-                      "day":"W",
-                      "location":"Klaus 1443"
-                    },
-                    {
-                      "start_time":610,
-                      "end_time":660,
-                      "day":"F",
-                      "location":"Klaus 1443"
-                    }
-                  ]
-                },
-                {
-                  "call_number":82743,
-                  "credits":3,
-                  "ident":"B02",
-                  "instructor":{
-                    "lname":"Simpkins",
-                    "fname":"Christopher L"
-                  },
-                  "timeslots":[
-                    {
-                      "start_time":545,
-                      "end_time":595,
-                      "day":"M",
-                      "location":"Howey (Physics) L2"
-                    },
-                    {
-                      "start_time":990,
-                      "end_time":1065,
-                      "day":"T",
-                      "location":"Molecular Sciences & Engr 1224"
-                    },
-                    {
-                      "start_time":545,
-                      "end_time":595,
-                      "day":"W",
-                      "location":"Howey (Physics) L2"
-                    },
-                    {
-                      "start_time":545,
-                      "end_time":595,
-                      "day":"F",
-                      "location":"Howey (Physics) L2"
-                    }
-                  ]
-                },
-                {
-                  "call_number":85826,
-                  "credits":3,
-                  "ident":"B04",
-                  "instructor":{
-                    "lname":"Simpkins",
-                    "fname":"Christopher L"
-                  },
-                  "timeslots":[
-                    {
-                      "start_time":545,
-                      "end_time":595,
-                      "day":"M",
-                      "location":"Howey (Physics) L2"
-                    },
-                    {
-                      "start_time":1080,
-                      "end_time":1155,
-                      "day":"T",
-                      "location":"Architecture (East) 207"
-                    },
-                    {
-                      "start_time":545,
-                      "end_time":595,
-                      "day":"W",
-                      "location":"Howey (Physics) L2"
-                    },
-                    {
-                      "start_time":545,
-                      "end_time":595,
-                      "day":"F",
-                      "location":"Howey (Physics) L2"
-                    }
-                  ]
-                },
-                {
-                  "call_number":84929,
-                  "credits":3,
-                  "ident":"C02",
-                  "instructor":{
-                    "lname":"Simpkins",
-                    "fname":"Christopher L"
-                  },
-                  "timeslots":[
-                    {
-                      "start_time":1460,
-                      "end_time":790,
-                      "day":"M",
-                      "location":"Clough Commons 152"
-                    },
-                    {
-                      "start_time":1080,
-                      "end_time":1155,
-                      "day":"T",
-                      "location":"Molecular Sciences & Engr 1224"
-                    },
-                    {
-                      "start_time":1460,
-                      "end_time":790,
-                      "day":"W",
-                      "location":"Clough Commons 152"
-                    },
-                    {
-                      "start_time":1460,
-                      "end_time":790,
-                      "day":"F",
-                      "location":"Clough Commons 152"
-                    }
-                  ]
-                },
-                {
-                  "call_number":85827,
-                  "credits":3,
-                  "ident":"C04",
-                  "instructor":{
-                    "lname":"Simpkins",
-                    "fname":"Christopher L"
-                  },
-                  "timeslots":[
-                    {
-                      "start_time":1460,
-                      "end_time":790,
-                      "day":"M",
-                      "location":"Clough Commons 152"
-                    },
-                    {
-                      "start_time":990,
-                      "end_time":1065,
-                      "day":"T",
-                      "location":"Bunger-Henry 380"
-                    },
-                    {
-                      "start_time":1460,
-                      "end_time":790,
-                      "day":"W",
-                      "location":"Clough Commons 152"
-                    },
-                    {
-                      "start_time":1460,
-                      "end_time":790,
-                      "day":"F",
-                      "location":"Clough Commons 152"
-                    }
-                  ]
-                },
-                {
-                  "call_number":87418,
-                  "credits":3,
-                  "ident":"C06",
-                  "instructor":{
-                    "lname":"Simpkins",
-                    "fname":"Christopher L"
-                  },
-                  "timeslots":[
-                    {
-                      "start_time":1460,
-                      "end_time":790,
-                      "day":"M",
-                      "location":"Clough Commons 152"
-                    },
-                    {
-                      "start_time":1080,
-                      "end_time":1155,
-                      "day":"T",
-                      "location":"Coll of Computing 101"
-                    },
-                    {
-                      "start_time":1460,
-                      "end_time":790,
-                      "day":"W",
-                      "location":"Clough Commons 152"
-                    },
-                    {
-                      "start_time":1460,
-                      "end_time":790,
-                      "day":"F",
-                      "location":"Clough Commons 152"
-                    }
-                  ]
-                },
-                {
-                  "call_number":82849,
-                  "credits":3,
-                  "ident":"GR",
-                  "instructor":{
-                    "lname":"Simpkins",
-                    "fname":"Christopher L"
-                  },
-                  "timeslots":[
-                    {
-                      "start_time":610,
-                      "end_time":660,
-                      "day":"M",
-                      "location":"Klaus 1443"
-                    },
-                    {
-                      "start_time":990,
-                      "end_time":1065,
-                      "day":"T",
-                      "location":"Love (MRDC II) 183"
-                    },
-                    {
-                      "start_time":610,
-                      "end_time":660,
-                      "day":"W",
-                      "location":"Klaus 1443"
-                    },
-                    {
-                      "start_time":610,
-                      "end_time":660,
-                      "day":"F",
-                      "location":"Klaus 1443"
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "maxCourses":-1,
-          "minCourses":-1,
-          "minHours":-1,
-          "maxHours":-1,
-          "priority":"Must"
-        },
-        "wantToTake":{
-          "courses":[
-            {
-              "_id":"1600",
-              "ident":"1600",
-              "major":"EAS",
-              "majorName":"Earth and Atmospheric Sciences",
-              "name":"Intro-Environmental Sci",
-              "instructors":[
-                "Glass, Jennifer B",
-                "Grantham, Meg Camille",
-                "Huey, Lewis Gregory"
-              ],
-              "sections":[
-                {
-                  "call_number":81206,
-                  "credits":4,
-                  "ident":"A",
-                  "instructor":{
-                    "lname":"Huey",
-                    "fname":"Lewis Gregory"
-                  },
-                  "timeslots":[
-                    {
-                      "start_time":1460,
-                      "end_time":790,
-                      "day":"M",
-                      "location":"Clough Commons 144"
-                    },
-                    {
-                      "start_time":1460,
-                      "end_time":790,
-                      "day":"W",
-                      "location":"Clough Commons 144"
-                    },
-                    {
-                      "start_time":1460,
-                      "end_time":790,
-                      "day":"F",
-                      "location":"Clough Commons 144"
-                    }
-                  ]
-                },
-                {
-                  "call_number":82838,
-                  "credits":0,
-                  "ident":"AM1",
-                  "instructor":{
-                    "lname":"Grantham",
-                    "fname":"Meg Camille"
-                  },
-                  "timeslots":[
-                    {
-                      "start_time":480,
-                      "end_time":645,
-                      "day":"M",
-                      "location":"Clough Commons 335"
-                    }
-                  ]
-                },
-                {
-                  "call_number":81211,
-                  "credits":0,
-                  "ident":"AM3",
-                  "instructor":{
-                    "lname":"Grantham",
-                    "fname":"Meg Camille"
-                  },
-                  "timeslots":[
-                    {
-                      "start_time":900,
-                      "end_time":1065,
-                      "day":"M",
-                      "location":"Clough Commons 335"
-                    }
-                  ]
-                },
-                {
-                  "call_number":81212,
-                  "credits":0,
-                  "ident":"AM4",
-                  "instructor":{
-                    "lname":"Grantham",
-                    "fname":"Meg Camille"
-                  },
-                  "timeslots":[
-                    {
-                      "start_time":1080,
-                      "end_time":1245,
-                      "day":"M",
-                      "location":"Clough Commons 335"
-                    }
-                  ]
-                },
-                {
-                  "call_number":81215,
-                  "credits":0,
-                  "ident":"AR1",
-                  "instructor":{
-                    "lname":"Grantham",
-                    "fname":"Meg Camille"
-                  },
-                  "timeslots":[
-                    {
-                      "start_time":480,
-                      "end_time":645,
-                      "day":"R",
-                      "location":"Clough Commons 335"
-                    }
-                  ]
-                },
-                {
-                  "call_number":81217,
-                  "credits":0,
-                  "ident":"AR2",
-                  "instructor":{
-                    "lname":"Grantham",
-                    "fname":"Meg Camille"
-                  },
-                  "timeslots":[
-                    {
-                      "start_time":1440,
-                      "end_time":885,
-                      "day":"R",
-                      "location":"Clough Commons 335"
-                    }
-                  ]
-                },
-                {
-                  "call_number":81210,
-                  "credits":0,
-                  "ident":"AR3",
-                  "instructor":{
-                    "lname":"Grantham",
-                    "fname":"Meg Camille"
-                  },
-                  "timeslots":[
-                    {
-                      "start_time":900,
-                      "end_time":1065,
-                      "day":"R",
-                      "location":"Clough Commons 335"
-                    }
-                  ]
-                },
-                {
-                  "call_number":81218,
-                  "credits":0,
-                  "ident":"AT1",
-                  "instructor":{
-                    "lname":"Grantham",
-                    "fname":"Meg Camille"
-                  },
-                  "timeslots":[
-                    {
-                      "start_time":480,
-                      "end_time":645,
-                      "day":"T",
-                      "location":"Clough Commons 335"
-                    }
-                  ]
-                },
-                {
-                  "call_number":81214,
-                  "credits":0,
-                  "ident":"AT2",
-                  "instructor":{
-                    "lname":"Grantham",
-                    "fname":"Meg Camille"
-                  },
-                  "timeslots":[
-                    {
-                      "start_time":1440,
-                      "end_time":885,
-                      "day":"T",
-                      "location":"Clough Commons 335"
-                    }
-                  ]
-                },
-                {
-                  "call_number":81213,
-                  "credits":0,
-                  "ident":"AT3",
-                  "instructor":{
-                    "lname":"Grantham",
-                    "fname":"Meg Camille"
-                  },
-                  "timeslots":[
-                    {
-                      "start_time":900,
-                      "end_time":1065,
-                      "day":"T",
-                      "location":"Clough Commons 335"
-                    }
-                  ]
-                },
-                {
-                  "call_number":81800,
-                  "credits":0,
-                  "ident":"AT4",
-                  "instructor":{
-                    "lname":"Grantham",
-                    "fname":"Meg Camille"
-                  },
-                  "timeslots":[
-                    {
-                      "start_time":1080,
-                      "end_time":1245,
-                      "day":"T",
-                      "location":"Clough Commons 335"
-                    }
-                  ]
-                },
-                {
-                  "call_number":83925,
-                  "credits":0,
-                  "ident":"AW3",
-                  "instructor":{
-                    "lname":"Grantham",
-                    "fname":"Meg Camille"
-                  },
-                  "timeslots":[
-                    {
-                      "start_time":900,
-                      "end_time":1065,
-                      "day":"W",
-                      "location":"Clough Commons 335"
-                    }
-                  ]
-                },
-                {
-                  "call_number":81812,
-                  "credits":0,
-                  "ident":"AW4",
-                  "instructor":{
-                    "lname":"Grantham",
-                    "fname":"Meg Camille"
-                  },
-                  "timeslots":[
-                    {
-                      "start_time":1080,
-                      "end_time":1245,
-                      "day":"W",
-                      "location":"Clough Commons 335"
-                    }
-                  ]
-                },
-                {
-                  "call_number":87369,
-                  "credits":4,
-                  "ident":"EAS",
-                  "instructor":{
-                    "lname":"Glass",
-                    "fname":"Jennifer B"
-                  },
-                  "timeslots":[
-                    {
-                      "start_time":810,
-                      "end_time":885,
-                      "day":"T",
-                      "location":"West Village Dining Commons 275"
-                    },
-                    {
-                      "start_time":1080,
-                      "end_time":1245,
-                      "day":"R",
-                      "location":"Clough Commons 335"
-                    },
-                    {
-                      "start_time":810,
-                      "end_time":885,
-                      "day":"R",
-                      "location":"West Village Dining Commons 275"
-                    }
-                  ]
-                },
-                {
-                  "call_number":88478,
-                  "credits":4,
-                  "ident":"HP",
-                  "instructor":{
-                    "lname":"Glass",
-                    "fname":"Jennifer B"
-                  },
-                  "timeslots":[
-                    {
-                      "start_time":810,
-                      "end_time":885,
-                      "day":"T",
-                      "location":"West Village Dining Commons 275"
-                    },
-                    {
-                      "start_time":1080,
-                      "end_time":1245,
-                      "day":"R",
-                      "location":"Clough Commons 335"
-                    },
-                    {
-                      "start_time":810,
-                      "end_time":885,
-                      "day":"R",
-                      "location":"West Village Dining Commons 275"
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "maxCourses":-1,
-          "minCourses":-1,
-          "minHours":-1,
-          "maxHours":-1,
-          "priority":"Med"
+  var db = req.db;
+  var collection = db.get('schedules');
+
+  schedule = `{"sched": [
+    {
+      "groupName": "any",
+      "ident": "3521",
+      "major": "AE",
+      "majorName": "Aerospace Engineering",
+      "name": "Flight Dynamics",
+      "priority": "Med",
+      "professors": [
+        {
+          "name": "Any",
+          "priority": "Med"
         }
+      ],
+      "section": {
+        "id": "562580d90248b461481330a1",
+        "call_number": 20819,
+        "credits": 4,
+        "ident": "A",
+        "instructor": {
+          "fname": "Eric Marie J ",
+          "lname": "Feron"
+        },
+        "seat_time": "2016-03-20T17:24:10.353Z",
+        "seats": {
+          "actual": 62,
+          "capacity": 65,
+          "remaining": 3
+        },
+        "timeslots": [
+          {
+            "id": "569ae16f14583c20002f025a",
+            "day": "M",
+            "end_time": 595,
+            "location": "Guggenheim 442",
+            "start_time": 545
+          },
+          {
+            "id": "569ae16f14583c20002f0259",
+            "day": "T",
+            "end_time": 565,
+            "location": "Guggenheim 442",
+            "start_time": 485
+          },
+          {
+            "id": "569ae16f14583c20002f0258",
+            "day": "R",
+            "end_time": 565,
+            "location": "Guggenheim 442",
+            "start_time": 485
+          }
+        ]
       }
     },
-    "cal":{
-      "8:00am":{
-        "0":"Low",
-        "1":"Low",
-        "2":"Low",
-        "3":"Low",
-        "4":"Low"
-      },
-      "9:00am":{
-        "0":"Med",
-        "1":"Med",
-        "2":"Med",
-        "3":"Med",
-        "4":"Med"
-      },
-      "10:00am":{
-        "0":"Med",
-        "1":"Med",
-        "2":"Med",
-        "3":"Med",
-        "4":"Med"
-      },
-      "11:00am":{
-        "0":"Med",
-        "1":"Med",
-        "2":"Med",
-        "3":"Med",
-        "4":"Med"
-      },
-      "12:00pm":{
-        "0":"Med",
-        "1":"Med",
-        "2":"Med",
-        "3":"Med",
-        "4":"Med"
-      },
-      "1:00pm":{
-        "0":"Med",
-        "1":"Med",
-        "2":"Med",
-        "3":"Med",
-        "4":"Med"
-      },
-      "2:00pm":{
-        "0":"Med",
-        "1":"Med",
-        "2":"Med",
-        "3":"Med",
-        "4":"Med"
-      },
-      "3:00pm":{
-        "0":"Med",
-        "1":"Med",
-        "2":"Med",
-        "3":"Med",
-        "4":"Med"
-      },
-      "4:00pm":{
-        "0":"Med",
-        "1":"Med",
-        "2":"Med",
-        "3":"Med",
-        "4":"Med"
-      },
-      "5:00pm":{
-        "0":"Low",
-        "1":"Low",
-        "2":"Low",
-        "3":"Low",
-        "4":"Low"
-      },
-      "6:00pm":{
-        "0":"Never",
-        "1":"Never",
-        "2":"Never",
-        "3":"Never",
-        "4":"Never"
-      },
-      "7:00pm":{
-        "0":"Never",
-        "1":"Never",
-        "2":"Never",
-        "3":"Never",
-        "4":"Never"
-      },
-      "8:00pm":{
-        "0":"Never",
-        "1":"Never",
-        "2":"Never",
-        "3":"Never",
-        "4":"Never"
-      },
-      "9:00pm":{
-        "0":"Never",
-        "1":"Never",
-        "2":"Never",
-        "3":"Never",
-        "4":"Never"
+    {
+      "groupName": "any",
+      "ident": "3756",
+      "major": "APPH",
+      "majorName": "Applied Physiology",
+      "name": "Physiology Lab",
+      "priority": "Med",
+      "professors": [
+        {
+          "name": "Any",
+          "priority": "Med"
+        }
+      ],
+      "section": {
+        "id": "5625778c0248b4614813286e",
+        "call_number": 27773,
+        "credits": 1,
+        "ident": "B",
+        "instructor": {
+          "fname": "Edward Michael ",
+          "lname": "Balog"
+        },
+        "seat_time": "2016-03-01T23:10:03.246Z",
+        "seats": {
+          "actual": 15,
+          "capacity": 24,
+          "remaining": 9
+        },
+        "timeslots": [
+          {
+            "id": "569ae15414583c20002efb04",
+            "day": "T",
+            "end_time": 1075,
+            "location": "Clough Undergraduate Commons 483",
+            "start_time": 905
+          }
+        ]
+      }
+    },
+    {
+      "groupName": "any",
+      "ident": "1120",
+      "major": "AS",
+      "majorName": "Air Force Aerospace Studies",
+      "name": "Foundations of the Af II",
+      "priority": "Med",
+      "professors": [
+        {
+          "name": "Any",
+          "priority": "Med"
+        }
+      ],
+      "section": {
+        "id": "562577710248b46148132334",
+        "call_number": 20519,
+        "credits": 1,
+        "ident": "A",
+        "instructor": {
+          "fname": "Michael C ",
+          "lname": "Olvera"
+        },
+        "seat_time": "2016-03-13T18:26:20.921Z",
+        "seats": {
+          "actual": 22,
+          "capacity": 60,
+          "remaining": 38
+        },
+        "timeslots": [
+          {
+            "id": "569ae13d14583c20002ef24f",
+            "day": "T",
+            "end_time": 685,
+            "location": "O'Keefe 202",
+            "start_time": 635
+          }
+        ]
+      }
+    },
+    {
+      "groupName": "any",
+      "ident": "4420",
+      "major": "AS",
+      "majorName": "Air Force Aerospace Studies",
+      "name": "Prep for Active Duty",
+      "priority": "Med",
+      "professors": [
+        {
+          "name": "Any",
+          "priority": "Med"
+        }
+      ],
+      "section": {
+        "id": "5625778e0248b461481328d9",
+        "call_number": 20526,
+        "credits": 3,
+        "ident": "A",
+        "instructor": {
+          "fname": "Lindsey E ",
+          "lname": "Myhr"
+        },
+        "seat_time": "2016-03-20T17:24:10.040Z",
+        "seats": {
+          "actual": 9,
+          "capacity": 40,
+          "remaining": 31
+        },
+        "timeslots": [
+          {
+            "id": "569ae15214583c20002efa4e",
+            "day": "T",
+            "end_time": 685,
+            "location": "O'Keefe 201",
+            "start_time": 605
+          },
+          {
+            "id": "569ae15214583c20002efa4d",
+            "day": "R",
+            "end_time": 685,
+            "location": "O'Keefe 201",
+            "start_time": 605
+          }
+        ]
+      }
+    },
+    {
+      "groupName": "any",
+      "ident": "2220",
+      "major": "AS",
+      "majorName": "Air Force Aerospace Studies",
+      "name": "Us Air & Space Power II",
+      "priority": "Med",
+      "professors": [
+        {
+          "name": "Any",
+          "priority": "Med"
+        }
+      ],
+      "section": {
+        "id": "5625777c0248b46148132525",
+        "call_number": 23316,
+        "credits": 1,
+        "ident": "B",
+        "instructor": {
+          "fname": "Michael C ",
+          "lname": "Olvera"
+        },
+        "seat_time": "2016-01-15T00:53:40.680Z",
+        "seats": {
+          "actual": 3,
+          "capacity": 50,
+          "remaining": 47
+        },
+        "timeslots": [
+          {
+            "id": "569ae14514583c20002ef535",
+            "day": "R",
+            "end_time": 865,
+            "location": "O'Keefe 202",
+            "start_time": 815
+          }
+        ]
+      }
+    },
+    {
+      "groupName": "any",
+      "ident": "2340",
+      "major": "CS",
+      "majorName": "Computer Science",
+      "name": "Objects and Design",
+      "priority": "Med",
+      "professors": [
+        {
+          "name": "Any",
+          "priority": "Med"
+        }
+      ],
+      "section": {
+        "id": "562580d40248b46148132f4c",
+        "call_number": 20764,
+        "credits": 3,
+        "ident": "A",
+        "instructor": {
+          "fname": "Robert Lee ",
+          "lname": "Waters"
+        },
+        "seat_time": "2016-03-25T04:34:18.093Z",
+        "seats": {
+          "actual": 300,
+          "capacity": 300,
+          "remaining": 0
+        },
+        "timeslots": [
+          {
+            "id": "569ae16814583c20002f0118",
+            "day": "M",
+            "end_time": 835,
+            "location": "Clough Undergraduate Commons 152",
+            "start_time": 785
+          },
+          {
+            "id": "569ae16814583c20002f0117",
+            "day": "W",
+            "end_time": 835,
+            "location": "Clough Undergraduate Commons 152",
+            "start_time": 785
+          },
+          {
+            "id": "569ae16814583c20002f0116",
+            "day": "F",
+            "end_time": 835,
+            "location": "Clough Undergraduate Commons 152",
+            "start_time": 785
+          }
+        ]
+      }
+    },
+    {
+      "groupName": "any",
+      "ident": "1601",
+      "major": "AE",
+      "majorName": "Aerospace Engineering",
+      "name": "Introduction to Ae",
+      "priority": "Med",
+      "professors": [
+        {
+          "name": "Any",
+          "priority": "Med"
+        }
+      ],
+      "section": {
+        "id": "562577780248b46148132456",
+        "call_number": 28763,
+        "credits": 1,
+        "ident": "B",
+        "instructor": {
+          "fname": "Amy R ",
+          "lname": "Pritchett"
+        },
+        "seat_time": "2016-03-23T22:51:36.277Z",
+        "seats": {
+          "actual": 42,
+          "capacity": 42,
+          "remaining": 0
+        },
+        "timeslots": [
+          {
+            "id": "569ae14214583c20002ef3eb",
+            "day": "T",
+            "end_time": 805,
+            "location": "Instr Center 219",
+            "start_time": 725
+          },
+          {
+            "id": "569ae14214583c20002ef3ea",
+            "day": "R",
+            "end_time": 805,
+            "location": "Instr Center 219",
+            "start_time": 725
+          }
+        ]
       }
     }
-  }
-  `;
-  res.send(rhc(JSON.parse(request)));
-  // res.send(rhc(require('./schedprefs.json')));
+  ]}`;
+  var sched = JSON.parse(schedule)
+  sched.email = 'fmarzen@gmail.com';
+  console.log(sched);
+  collection.insert(sched);
+  res.send(200)
 });
 
 module.exports = router;
