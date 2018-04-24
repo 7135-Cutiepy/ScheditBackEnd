@@ -1,6 +1,6 @@
 # ScheditBackend
 
-Backend server written in Node.js for 
+Backend server written in Node.js for the Schedit application. MongoDB is required as a pre-requisite, and can be installed at their site [https://www.mongodb.com/]()
 
 ## Install Dependencies
 
