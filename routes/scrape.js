@@ -219,7 +219,18 @@ var create_section_2 = function(section_string) {
                     minutes: +split_time[1][0],
                     am_pm: split_time[1][1]
                 };
-                converted_times.push((time_obj.hours * 60 + time_obj.minutes) + ((time_obj.am_pm == 'pm') ? 12*60 : 0));
+                var conv_time = (time_obj.hours * 60 + time_obj.minutes);
+                if (time_obj.am_pm == 'pm') {
+                    if (time_obj.hours < 12) {
+                        console.log("time: " + time_obj)
+                        conv_time += 12*60;
+                    }
+                }
+                // (time_obj.hours * 60 + time_obj.minutes) + ((time_obj.am_pm == 'pm') ? 12*60 : 0);
+                if (conv_time > 1440) {
+                    console.log(conv_time)
+                }
+                converted_times.push(conv_time);
             });
             timeslot_obj.start_time = converted_times[0];
             timeslot_obj.end_time = converted_times[1];
